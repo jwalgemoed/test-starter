@@ -140,21 +140,4 @@ public class BankingServiceTest {
         assertEquals(100, source.getBalance());
         assertEquals(100, target.getBalance());
     }
-    
-    @Test
-    public void testFindAccount() throws SQLException {
-        final Account mock = new Account("NUMBER1", true, 100);
-        when(bankingRepository.findAccount("NUMBER1")).thenReturn(mock);
-        
-        final Account found = bankingService.find("NUMBER1");
-        
-        assertEquals(mock, found);
-    }
-
-    @Test(expected = SQLException.class)
-    public void testFindAccountError() throws SQLException {
-        when(bankingRepository.findAccount("NUMBER1")).thenThrow(SQLException.class);
-        
-        final Account found = bankingService.find("NUMBER1");
-    }
 }
