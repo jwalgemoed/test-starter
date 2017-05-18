@@ -16,10 +16,32 @@ public class BankingServiceTest {
     
     @InjectMocks
     private BankingService bankingService;
-    
+
     @Mock
     private BankingRepository bankingRepository;
     
+    @Mock
+    private Account account;
+
+    @Test
+    public void testFindAccount() throws SQLException {
+        when(account.getBalance()).thenReturn(1000);
+        when(bankingRepository.findAccount("NUMBER1")).thenReturn(account);
+
+        final Account found = bankingService.find("NUMBER1");
+
+        assertEquals(account, found);
+
+        System.out.println(account.getBalance());
+    }
+
+    @Test(expected = SQLException.class)
+    public void testFindAccountError() throws SQLException {
+        when(bankingRepository.findAccount("NUMBER1")).thenThrow(SQLException.class);
+
+        final Account found = bankingService.find("NUMBER1");
+    }
+
     @Test
     public void testDepositOk() throws SQLException {
         final Account account = new Account("NUMBER1", true, 100);
@@ -41,7 +63,7 @@ public class BankingServiceTest {
         verify(bankingRepository, times(1)).saveAccount(account);
         assertEquals(100, account.getBalance());
     }
-    
+
     @Test
     public void testWithdrawalOk() throws SQLException {
         final Account account = new Account("NUMBER1", true, 100);
@@ -72,7 +94,7 @@ public class BankingServiceTest {
 
         bankingService.withdraw(account, 150);
     }
-    
+
     @Test
     public void testTransferOk() throws SQLException {
         final Account source = new Account("NUMBER1", false, 100);
@@ -124,7 +146,7 @@ public class BankingServiceTest {
         assertEquals(100, source.getBalance());
         assertEquals(100, target.getBalance());
     }
-
+    
     @Test
     public void testTransferErrorTwo() throws SQLException {
         final Account source = new Account("NUMBER1", true, 100);
