@@ -26,7 +26,7 @@ public class SortPerformanceTest {
 
     @Test
     public void testHugeSort() throws Exception {
-        compareSortPerformance(100000, 10000);
+        compareSortPerformance(20000, 10000);
     }
 
     private int [] setUp(int size, int max) throws Exception {

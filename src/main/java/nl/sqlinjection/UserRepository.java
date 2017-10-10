@@ -13,7 +13,7 @@ public class UserRepository {
     
     public List<String> findUsers(final String name) throws Exception {
         final List<String> users = new ArrayList<>();
-        final String query = "SELECT * FROM USERS WHERE name = '" + name + "'; ";
+        final String query = "SELECT * FROM users WHERE name = '" + name + "'; ";
         try (
                 final Connection connection = DriverManager.getConnection(connectionUrl, username, password);
                 final Statement statement = connection.createStatement();
@@ -27,7 +27,7 @@ public class UserRepository {
     }
     
     public void insertUser(final String name) throws Exception {
-        final String query = "INSERT INTO USERS (name) VALUES ('" + name + "');";
+        final String query = "INSERT INTO users (name) VALUES ('" + name + "');";
         try (final Connection connection = DriverManager.getConnection(connectionUrl, username, password);
              final Statement statement = connection.createStatement()) {
             statement.execute(query);

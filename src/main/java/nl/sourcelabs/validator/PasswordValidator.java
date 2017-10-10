@@ -4,7 +4,7 @@ package nl.sourcelabs.validator;
  * Assignment: Test the validate method in this class.
  * 
  * Regex based password validator. A Regex is an expression that can be quickly parsed by a computer, allowing
- * for quickly matching patterns in text.
+ * for quickly matching patterns in text. Downside: computers are better at reading them than humans are...
  */
 public class PasswordValidator {
 

@@ -6,7 +6,11 @@
 
   <groupId>nl.sourcelabs</groupId>
   <artifactId>software-engineering-track</artifactId>
+  <packaging>pom</packaging>
   <version>1.0-SNAPSHOT</version>
+  <modules>
+    <module>../Week5</module>
+  </modules>
 
   <dependencies>
     

